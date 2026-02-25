@@ -20,9 +20,10 @@ const sendTokenResponse = (user,statusCode,res)=>{
 //@access   Public
 exports.register = async (req,res,next)=>{
     try {
-        const {name,email,password,role} = req.body;
+        const {name,telephone,email,password,role} = req.body;
         const user = await User.create({
             name,
+            telephone,
             email,
             password,
             role
@@ -42,17 +43,17 @@ exports.login = async (req,res,next)=>{
 
     //Validate
     if(!email||!password){
-        return res.status(400).json({succes:false,msg:'Please provide an email and password'});
+        return res.status(400).json({success:false,msg:'Please provide an email and password'});
     }
 
     const user = await User.findOne({email}).select('+password')
     if(!user){
-        return res.status(400).json({succes:false,msg:'Invalid credentials'});
+        return res.status(400).json({success:false,msg:'Invalid credentials'});
     }
 
     const isMatch = await user.matchPassword(password);
     if(!isMatch){
-        return res.status(400).json({succes:false,msg:'Invalid credentials'});
+        return res.status(400).json({success:false,msg:'Invalid credentials'});
     }
 
     //Password Match Create Token

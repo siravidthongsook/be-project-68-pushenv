@@ -1,13 +1,13 @@
 # Project TO-DOs
 
 ## Models
-- [ ] Add `tel` field to User model and fix password re-hash bug
+- [X] Add `tel` field to User model and fix password re-hash bug
 - [ ] Implement Company model (name, address, website, description, tel)
 - [ ] Implement Interview model (date, user ref, company ref, booking limit, date validation)
 
 ## Auth Routes (`/api/v1/auth`)
 - [ ] Add telephone field to registration
-- [ ] Fix `succes` typo in login responses
+- [X] Fix `succes` typo in login responses
 - [ ] Add try/catch to login and getMe
 - [ ] Implement logout endpoint (clear cookie)
 

@@ -9,7 +9,7 @@ dotenv.config({ path: './config/config.env' });
 // Connect to database
 connectDB();
 
-// Route files
+// // Route files
 const companies = require('./routes/companies');
 const auth = require('./routes/auth');
 const interviews = require('./routes/interviews');
