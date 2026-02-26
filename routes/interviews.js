@@ -1,4 +1,26 @@
 const express = require('express');
-const router = express.Router();
-// No routes yet
+
+const {
+  getInterviews,
+  getInterview,
+  addInterview,
+  updateInterview,
+  deleteInterview
+} = require('../controllers/interviews');
+
+// Import authentication middleware
+const { protect, authorize } = require('../middleware/auth');
+
+// We need to merge params so we can access companyId from the Company router
+const router = express.Router({ mergeParams: true });
+
+router.route('/')
+  .get(protect, getInterviews)
+  .post(protect, authorize('user'), addInterview); // User only
+
+router.route('/:id')
+  .get(protect, getInterview)
+  .put(protect, authorize('admin', 'user'), updateInterview)
+  .delete(protect, authorize('admin', 'user'), deleteInterview);
+
 module.exports = router;

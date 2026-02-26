@@ -34,38 +34,66 @@ exports.register = async (req,res,next)=>{
         console.log(error.stack);
     }
 };
+//@desc    Login to registerd User
+//@route   POST /api/v1/auth/login
+//@access  Public
+exports.login = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
 
-//@desc     Login to registerd User
-//@route    POST /api/v1/auth/login
-//@access   Public
-exports.login = async (req,res,next)=>{
-    const{email,password} = req.body;
-
-    //Validate
-    if(!email||!password){
-        return res.status(400).json({success:false,msg:'Please provide an email and password'});
+    // Validate
+    if (!email || !password) {
+      return res.status(400).json({ success: false, msg: 'Please provide an email and password' });
     }
 
-    const user = await User.findOne({email}).select('+password')
-    if(!user){
-        return res.status(400).json({success:false,msg:'Invalid credentials'});
-    }
+    const user = await User.findOne({ email }).select('+password');
 
+    if (!user) {
+      return res.status(400).json({ success: false, msg: 'Invalid credentials' });
+    }
+    
     const isMatch = await user.matchPassword(password);
-    if(!isMatch){
-        return res.status(400).json({success:false,msg:'Invalid credentials'});
+
+    if (!isMatch) {
+      return res.status(400).json({ success: false, msg: 'Invalid credentials' });
     }
 
-    //Password Match Create Token
-    const token= user.getSignedJwtToken();
-
-    sendTokenResponse(user,200,res);
+    // Password Match Create Token (Removed redundant token generation since sendTokenResponse handles it)
+    sendTokenResponse(user, 200, res);
+  } catch (error) {
+    console.log(error.stack);
+    res.status(400).json({ success: false });
+  }
 };
 
-exports.getMe= async (req,res,next)=>{
+//@desc    Get current logged in user
+//@route   GET /api/v1/auth/me
+//@access  Private
+exports.getMe = async (req, res, next) => {
+  try {
     const user = await User.findById(req.user.id);
     res.status(200).json({
-        success:true,
-        data:user
+      success: true,
+      data: user
     });
+  } catch (error) {
+    console.log(error.stack);
+    res.status(400).json({ success: false });
+  }
+};
+
+//@desc    Log user out / clear cookie
+//@route   GET /api/v1/auth/logout
+//@access  Private
+exports.logout = async (req, res, next) => {
+  // Overwrite the existing token cookie with a dummy value and expire it immediately
+  res.cookie('token', 'none', {
+    expires: new Date(Date.now() + 10 * 1000), // Expires in 10 seconds
+    httpOnly: true
+  });
+
+  res.status(200).json({
+    success: true,
+    data: {}
+  });
 };
