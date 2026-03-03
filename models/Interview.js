@@ -15,16 +15,6 @@ const InterviewSchema = new mongoose.Schema({
         ref: 'Company',
         required: true
     },
-    bookingLimit: {
-        type: Number,
-        required: true,
-        min: 3,
-        max: 3
-    },
-    dateValidation: {
-        type: Date,
-        required: true,
-    },
     createdAt: {
         type: Date,
         default: Date.now

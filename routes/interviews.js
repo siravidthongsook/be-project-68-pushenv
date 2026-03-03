@@ -4,6 +4,7 @@ const {
   getInterviews,
   getInterview,
   addInterview,
+  addMultipleInterviews,
   updateInterview,
   deleteInterview
 } = require('../controllers/interviews');
@@ -17,6 +18,9 @@ const router = express.Router({ mergeParams: true });
 router.route('/')
   .get(protect, getInterviews)
   .post(protect, authorize('user'), addInterview); // User only
+
+router.route('/bulk')
+  .post(protect, authorize('user'), addMultipleInterviews); // User only
 
 router.route('/:id')
   .get(protect, getInterview)

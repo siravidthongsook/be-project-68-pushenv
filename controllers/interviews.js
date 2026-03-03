@@ -1,6 +1,9 @@
 const Interview = require("../models/Interview");
 const Company = require("../models/Company");
 
+const INTERVIEW_START_DATE = new Date("2022-05-10T00:00:00.000Z");
+const INTERVIEW_END_DATE = new Date("2022-05-13T23:59:59.999Z");
+
 //@desc     Get all interviews
 //@route    GET /api/v1/interviews
 //@route    GET /api/v1/companies/:companyId/interviews
@@ -104,39 +107,24 @@ exports.addInterview = async (req, res, next) => {
   try {
     req.body.company = req.params.companyId;
     req.body.user = req.user.id;
-    if (!req.body.bookingLimit) req.body.bookingLimit = 3;
 
-    // --- NEW DATE VALIDATION LOGIC ---
-    // 1. Check if the user provided a date
     if (!req.body.date) {
       return res
         .status(400)
         .json({ success: false, message: "Please provide an interview date" });
     }
 
-    // 2. Check if the date is in the future
     const requestedDate = new Date(req.body.date);
-    const currentDate = new Date(req.body.dateValidation);
-
-    const startDate = new Date("2022-05-10T00:00:00.000Z");
-    const endDate = new Date("2022-05-13T23:59:59.999Z");
-
-    if (requestedDate < startDate || requestedDate > endDate) {
+    if (
+      Number.isNaN(requestedDate.getTime()) ||
+      requestedDate < INTERVIEW_START_DATE ||
+      requestedDate > INTERVIEW_END_DATE
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Interview date must be between May 10, 2022 and May 13, 2022",
+        message: "Interview date must be between May 10 and May 13, 2022",
       });
     }
-
-    if (requestedDate >= currentDate) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Interview date must be in the future",
-        });
-    }
-    // ---------------------------------
 
     // Check if the company exists
     const company = await Company.findById(req.params.companyId);
@@ -171,6 +159,106 @@ exports.addInterview = async (req, res, next) => {
   }
 };
 
+//@desc     Add interviews for multiple companies at once
+//@route    POST /api/v1/interviews/bulk
+//@access   Private (User Only)
+exports.addMultipleInterviews = async (req, res, next) => {
+  try {
+    if (req.params.companyId) {
+      return res.status(400).json({
+        success: false,
+        message: "Use POST /api/v1/interviews/bulk for multi-company booking",
+      });
+    }
+
+    const { date, companyIds } = req.body;
+
+    if (!date) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Please provide an interview date" });
+    }
+
+    const requestedDate = new Date(date);
+    if (
+      Number.isNaN(requestedDate.getTime()) ||
+      requestedDate < INTERVIEW_START_DATE ||
+      requestedDate > INTERVIEW_END_DATE
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Interview date must be between May 10 and May 13, 2022",
+      });
+    }
+
+    if (!Array.isArray(companyIds) || companyIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide companyIds as a non-empty array",
+      });
+    }
+
+    const uniqueCompanyIds = [...new Set(companyIds)];
+
+    if (uniqueCompanyIds.length > 3) {
+      return res.status(400).json({
+        success: false,
+        message: "You can book at most 3 interviews per request",
+      });
+    }
+
+    const existingInterviewCount = await Interview.countDocuments({
+      user: req.user.id,
+    });
+
+    if (
+      req.user.role !== "admin" &&
+      existingInterviewCount + uniqueCompanyIds.length > 3
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: `The user with ID ${req.user.id} can only schedule up to 3 interviews`,
+      });
+    }
+
+    const companies = await Company.find({ _id: { $in: uniqueCompanyIds } }).select(
+      "_id",
+    );
+
+    if (companies.length !== uniqueCompanyIds.length) {
+      const existingCompanyIds = new Set(companies.map((company) => company._id.toString()));
+      const missingCompanyIds = uniqueCompanyIds.filter(
+        (companyId) => !existingCompanyIds.has(companyId.toString()),
+      );
+
+      return res.status(404).json({
+        success: false,
+        message: "Some companies were not found",
+        missingCompanyIds,
+      });
+    }
+
+    const payload = uniqueCompanyIds.map((companyId) => ({
+      date: requestedDate,
+      company: companyId,
+      user: req.user.id,
+    }));
+
+    const interviews = await Interview.insertMany(payload);
+
+    res.status(201).json({
+      success: true,
+      count: interviews.length,
+      data: interviews,
+    });
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Cannot create Interviews" });
+  }
+};
+
 //@desc     Update interview
 //@route    PUT /api/v1/interviews/:id
 //@access   Private
@@ -198,6 +286,20 @@ exports.updateInterview = async (req, res, next) => {
           success: false,
           message: `User ${req.user.id} is not authorized to update this interview`,
         });
+    }
+
+    if (req.body.date) {
+      const requestedDate = new Date(req.body.date);
+      if (
+        Number.isNaN(requestedDate.getTime()) ||
+        requestedDate < INTERVIEW_START_DATE ||
+        requestedDate > INTERVIEW_END_DATE
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Interview date must be between May 10 and May 13, 2022",
+        });
+      }
     }
 
     interview = await Interview.findByIdAndUpdate(req.params.id, req.body, {
