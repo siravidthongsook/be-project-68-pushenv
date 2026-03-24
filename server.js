@@ -52,18 +52,19 @@ app.use(helmet());
 // Prevent XSS (Cross-Site Scripting) attacks
 app.use(xss());
 
+// Enable CORS (Allows different domains to access your API)
+app.use(cors());
+app.options(/.*/, cors());
+
 // Rate limiting (Prevents brute-force attacks/spamming)
 const limiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  max: 10000, // limit each IP to 100 requests per windowMs
 });
 app.use(limiter);
 
 // Prevent HTTP param pollution
 app.use(hpp());
-
-// Enable CORS (Allows different domains to access your API)
-app.use(cors());
 
 app.use('/api/v1/companies', companies);
 app.use('/api/v1/auth', auth);
