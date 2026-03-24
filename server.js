@@ -26,6 +26,9 @@ const errorHandler = require('./middleware/error');
 
 const app = express();
 
+// Trust the first upstream proxy so rate limiting can use client IPs from forwarded headers.
+app.set('trust proxy', 1);
+
 app.set('query parser','extended')
 
 // Body parser
