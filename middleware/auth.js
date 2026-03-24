@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const createError = require('../utils/createError');
 
 //Protect routes
 exports.protect = async (req, res, next) => {
@@ -14,33 +15,30 @@ exports.protect = async (req, res, next) => {
   }
 
   if (!token) {
-    return res
-      .status(401)
-      .json({ success: false, msg: "Not authorize to access this route" });
+    return next(createError('คุณไม่มีสิทธิ์เข้าถึงเส้นทางนี้', 401));
   }
 
   try {
     //Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log(decoded);
     req.user = await User.findById(decoded.id);
+
+    if (!req.user) {
+      return next(createError('ไม่พบบัญชีผู้ใช้สำหรับโทเคนนี้', 401));
+    }
 
     next();
   } catch (err) {
-    console.log(err.stack);
-    return res
-      .status(401)
-      .json({ success: false, msg: "Not authorize to access this route" });
+    return next(createError('คุณไม่มีสิทธิ์เข้าถึงเส้นทางนี้', 401));
   }
 };
 
 exports.authorize = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
-      return res.status(403).json({
-        success: false,
-        message: `User role ${req.user.role} is not authorized to access this route`,
-      });
+      return next(
+        createError(`สิทธิ์ ${req.user.role} ไม่มีสิทธิ์เข้าถึงเส้นทางนี้`, 403),
+      );
     }
     next();
   };

@@ -43,7 +43,7 @@ exports.getUsers = async (req, res, next) => {
     console.log(error);
     return res
       .status(500)
-      .json({ success: false, message: 'Cannot find Users' });
+      .json({ success: false, message: 'ไม่สามารถโหลดข้อมูลผู้ใช้ได้' });
   }
 };
 
@@ -57,7 +57,7 @@ exports.updateUser = async (req, res, next) => {
     if (!role || !['user', 'admin'].includes(role)) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide a valid role',
+        message: 'กรุณาระบุสิทธิ์ผู้ใช้ที่ถูกต้อง',
       });
     }
 
@@ -73,7 +73,7 @@ exports.updateUser = async (req, res, next) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: `No user with the id of ${req.params.id}`,
+        message: `ไม่พบบัญชีผู้ใช้ที่มีรหัส ${req.params.id}`,
       });
     }
 
@@ -87,7 +87,7 @@ exports.updateUser = async (req, res, next) => {
     console.log(error);
     return res
       .status(500)
-      .json({ success: false, message: 'Cannot update User' });
+      .json({ success: false, message: 'ไม่สามารถอัปเดตข้อมูลผู้ใช้ได้' });
   }
 };
 
@@ -99,7 +99,7 @@ exports.deleteUser = async (req, res, next) => {
     if (String(req.user.id) === String(req.params.id)) {
       return res.status(400).json({
         success: false,
-        message: 'You cannot delete your own admin account',
+        message: 'คุณไม่สามารถลบบัญชีแอดมินของตัวเองได้',
       });
     }
 
@@ -108,7 +108,7 @@ exports.deleteUser = async (req, res, next) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: `No user with the id of ${req.params.id}`,
+        message: `ไม่พบบัญชีผู้ใช้ที่มีรหัส ${req.params.id}`,
       });
     }
 
@@ -123,6 +123,6 @@ exports.deleteUser = async (req, res, next) => {
     console.log(error);
     return res
       .status(500)
-      .json({ success: false, message: 'Cannot delete User' });
+      .json({ success: false, message: 'ไม่สามารถลบผู้ใช้ได้' });
   }
 };

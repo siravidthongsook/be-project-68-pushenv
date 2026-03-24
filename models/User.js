@@ -5,21 +5,21 @@ const jwt = require("jsonwebtoken");
 const UserSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: [true, "Please add a name"],
+    required: [true, "กรุณากรอกชื่อ"],
   },
   telephone: {
     type: String,
-    required: [true, "Please add a telephone number"],
+    required: [true, "กรุณากรอกเบอร์โทรศัพท์"],
     unique: true,
-    match: [/^\d{10}$/, "Please add a valid telephone number"],
+    match: [/^\d{10}$/, "กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง"],
   },
   email: {
     type: String,
-    required: [true, "Please add an email"],
+    required: [true, "กรุณากรอกอีเมล"],
     unique: true,
     match: [
       /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
-      "Please add a valid email",
+      "กรุณากรอกอีเมลให้ถูกต้อง",
     ],
   },
   role: {
@@ -29,8 +29,8 @@ const UserSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: [true, "Please add a password"],
-    minlength: 6,
+    required: [true, "กรุณากรอกรหัสผ่าน"],
+    minlength: [6, "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร"],
     select: false,
   },
   resetPasswordToken: String,

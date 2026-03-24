@@ -158,7 +158,7 @@ exports.getInterviews = async (req, res, next) => {
     console.log(error);
     return res
       .status(500)
-      .json({ success: false, message: "Cannot find Interview" });
+      .json({ success: false, message: "ไม่สามารถโหลดข้อมูลการสัมภาษณ์ได้" });
   }
 };
 
@@ -177,7 +177,7 @@ exports.getInterview = async (req, res, next) => {
         .status(404)
         .json({
           success: false,
-          message: `No interview with the id of ${req.params.id}`,
+          message: `ไม่พบการสัมภาษณ์ที่มีรหัส ${req.params.id}`,
         });
     }
 
@@ -190,7 +190,7 @@ exports.getInterview = async (req, res, next) => {
         .status(401)
         .json({
           success: false,
-          message: `User ${req.user.id} is not authorized to view this interview`,
+          message: `ผู้ใช้ ${req.user.id} ไม่มีสิทธิ์ดูการสัมภาษณ์นี้`,
         });
     }
 
@@ -204,7 +204,7 @@ exports.getInterview = async (req, res, next) => {
     console.log(error);
     return res
       .status(500)
-      .json({ success: false, message: "Cannot find Interview" });
+      .json({ success: false, message: "ไม่สามารถโหลดข้อมูลการสัมภาษณ์ได้" });
   }
 };
 
@@ -220,13 +220,13 @@ exports.addInterview = async (req, res, next) => {
     if (targetUserId === null) {
       return res
         .status(400)
-        .json({ success: false, message: "Please provide a userId" });
+        .json({ success: false, message: "กรุณาระบุ userId" });
     }
 
     if (targetUserId === undefined) {
       return res
         .status(404)
-        .json({ success: false, message: "No user found for the supplied userId" });
+        .json({ success: false, message: "ไม่พบบัญชีผู้ใช้สำหรับ userId ที่ระบุ" });
     }
 
     req.body.user = targetUserId;
@@ -234,13 +234,13 @@ exports.addInterview = async (req, res, next) => {
     if (!req.body.date) {
       return res
         .status(400)
-        .json({ success: false, message: "Please provide an interview date" });
+        .json({ success: false, message: "กรุณาระบุวันสัมภาษณ์" });
     }
 
     if (!isAllowedInterviewDate(req.body.date)) {
       return res.status(400).json({
         success: false,
-        message: "Please choose one of the available interview slots",
+        message: "กรุณาเลือกช่วงเวลาสัมภาษณ์ที่ระบบเปิดให้จอง",
       });
     }
 
@@ -251,7 +251,7 @@ exports.addInterview = async (req, res, next) => {
         .status(404)
         .json({
           success: false,
-          message: `No company with the id of ${req.params.companyId}`,
+          message: `ไม่พบบริษัทที่มีรหัส ${req.params.companyId}`,
         });
     }
 
@@ -262,7 +262,7 @@ exports.addInterview = async (req, res, next) => {
         .status(400)
         .json({
           success: false,
-          message: `The user with ID ${targetUserId} has already scheduled 3 interviews`,
+          message: `ผู้ใช้รหัส ${targetUserId} จองสัมภาษณ์ครบ 3 รายการแล้ว`,
         });
     }
 
@@ -273,7 +273,7 @@ exports.addInterview = async (req, res, next) => {
     console.log(error);
     return res
       .status(500)
-      .json({ success: false, message: "Cannot create Interview" });
+      .json({ success: false, message: "ไม่สามารถสร้างการจองสัมภาษณ์ได้" });
   }
 };
 
@@ -285,7 +285,7 @@ exports.addMultipleInterviews = async (req, res, next) => {
     if (req.params.companyId) {
       return res.status(400).json({
         success: false,
-        message: "Use POST /api/v1/interviews/bulk for multi-company booking",
+        message: "กรุณาใช้ POST /api/v1/interviews/bulk สำหรับการจองหลายบริษัท",
       });
     }
 
@@ -295,32 +295,32 @@ exports.addMultipleInterviews = async (req, res, next) => {
     if (targetUserId === null) {
       return res
         .status(400)
-        .json({ success: false, message: "Please provide a userId" });
+        .json({ success: false, message: "กรุณาระบุ userId" });
     }
 
     if (targetUserId === undefined) {
       return res
         .status(404)
-        .json({ success: false, message: "No user found for the supplied userId" });
+        .json({ success: false, message: "ไม่พบบัญชีผู้ใช้สำหรับ userId ที่ระบุ" });
     }
 
     if (!date) {
       return res
         .status(400)
-        .json({ success: false, message: "Please provide an interview date" });
+        .json({ success: false, message: "กรุณาระบุวันสัมภาษณ์" });
     }
 
     if (!isAllowedInterviewDate(date)) {
       return res.status(400).json({
         success: false,
-        message: "Please choose one of the available interview slots",
+        message: "กรุณาเลือกช่วงเวลาสัมภาษณ์ที่ระบบเปิดให้จอง",
       });
     }
 
     if (!Array.isArray(companyIds) || companyIds.length === 0) {
       return res.status(400).json({
         success: false,
-        message: "Please provide companyIds as a non-empty array",
+        message: "กรุณาระบุ companyIds เป็นอาร์เรย์ที่มีข้อมูลอย่างน้อย 1 รายการ",
       });
     }
 
@@ -329,7 +329,7 @@ exports.addMultipleInterviews = async (req, res, next) => {
     if (uniqueCompanyIds.length > 3) {
       return res.status(400).json({
         success: false,
-        message: "You can book at most 3 interviews per request",
+        message: "คุณสามารถจองได้สูงสุด 3 รายการต่อคำขอ",
       });
     }
 
@@ -343,7 +343,7 @@ exports.addMultipleInterviews = async (req, res, next) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: `The user with ID ${targetUserId} can only schedule up to 3 interviews`,
+        message: `ผู้ใช้รหัส ${targetUserId} สามารถจองสัมภาษณ์ได้สูงสุด 3 รายการ`,
       });
     }
 
@@ -359,7 +359,7 @@ exports.addMultipleInterviews = async (req, res, next) => {
 
       return res.status(404).json({
         success: false,
-        message: "Some companies were not found",
+        message: "พบบางบริษัทไม่ครบตามที่ระบุ",
         missingCompanyIds,
       });
     }
@@ -381,7 +381,7 @@ exports.addMultipleInterviews = async (req, res, next) => {
     console.log(error);
     return res
       .status(500)
-      .json({ success: false, message: "Cannot create Interviews" });
+      .json({ success: false, message: "ไม่สามารถสร้างการจองสัมภาษณ์หลายรายการได้" });
   }
 };
 
@@ -397,7 +397,7 @@ exports.updateInterview = async (req, res, next) => {
         .status(404)
         .json({
           success: false,
-          message: `No interview with the id of ${req.params.id}`,
+          message: `ไม่พบการสัมภาษณ์ที่มีรหัส ${req.params.id}`,
         });
     }
 
@@ -410,7 +410,7 @@ exports.updateInterview = async (req, res, next) => {
         .status(401)
         .json({
           success: false,
-          message: `User ${req.user.id} is not authorized to update this interview`,
+          message: `ผู้ใช้ ${req.user.id} ไม่มีสิทธิ์แก้ไขการสัมภาษณ์นี้`,
         });
     }
 
@@ -418,7 +418,7 @@ exports.updateInterview = async (req, res, next) => {
       if (!isAllowedInterviewDate(req.body.date)) {
         return res.status(400).json({
           success: false,
-          message: "Please choose one of the available interview slots",
+          message: "กรุณาเลือกช่วงเวลาสัมภาษณ์ที่ระบบเปิดให้จอง",
         });
       }
     }
@@ -433,7 +433,7 @@ exports.updateInterview = async (req, res, next) => {
     console.log(error);
     return res
       .status(500)
-      .json({ success: false, message: "Cannot update Interview" });
+      .json({ success: false, message: "ไม่สามารถอัปเดตการสัมภาษณ์ได้" });
   }
 };
 
@@ -449,7 +449,7 @@ exports.deleteInterview = async (req, res, next) => {
         .status(404)
         .json({
           success: false,
-          message: `No interview with the id of ${req.params.id}`,
+          message: `ไม่พบการสัมภาษณ์ที่มีรหัส ${req.params.id}`,
         });
     }
 
@@ -462,7 +462,7 @@ exports.deleteInterview = async (req, res, next) => {
         .status(401)
         .json({
           success: false,
-          message: `User ${req.user.id} is not authorized to delete this interview`,
+          message: `ผู้ใช้ ${req.user.id} ไม่มีสิทธิ์ลบการสัมภาษณ์นี้`,
         });
     }
 
@@ -473,6 +473,6 @@ exports.deleteInterview = async (req, res, next) => {
     console.log(error);
     return res
       .status(500)
-      .json({ success: false, message: "Cannot delete Interview" });
+      .json({ success: false, message: "ไม่สามารถลบการสัมภาษณ์ได้" });
   }
 };

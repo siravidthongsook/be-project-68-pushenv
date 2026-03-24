@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const createError = require('../utils/createError');
 
 const sendTokenResponse = (user,statusCode,res)=>{
     const token = user.getSignedJwtToken()
@@ -30,8 +31,7 @@ exports.register = async (req,res,next)=>{
         });
         sendTokenResponse(user,200,res);
     } catch (error) {
-        res.status(400).json({success:false})
-        console.log(error.stack);
+        next(error);
     }
 };
 //@desc    Login to registerd User
@@ -43,26 +43,25 @@ exports.login = async (req, res, next) => {
 
     // Validate
     if (!email || !password) {
-      return res.status(400).json({ success: false, msg: 'Please provide an email and password' });
+      return next(createError('กรุณากรอกอีเมลและรหัสผ่าน', 400));
     }
 
     const user = await User.findOne({ email }).select('+password');
 
     if (!user) {
-      return res.status(400).json({ success: false, msg: 'Invalid credentials' });
+      return next(createError('อีเมลหรือรหัสผ่านไม่ถูกต้อง', 400));
     }
     
     const isMatch = await user.matchPassword(password);
 
     if (!isMatch) {
-      return res.status(400).json({ success: false, msg: 'Invalid credentials' });
+      return next(createError('อีเมลหรือรหัสผ่านไม่ถูกต้อง', 400));
     }
 
     // Password Match Create Token (Removed redundant token generation since sendTokenResponse handles it)
     sendTokenResponse(user, 200, res);
   } catch (error) {
-    console.log(error.stack);
-    res.status(400).json({ success: false });
+    next(error);
   }
 };
 
@@ -72,13 +71,15 @@ exports.login = async (req, res, next) => {
 exports.getMe = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);
+    if (!user) {
+      return next(createError('ไม่พบบัญชีผู้ใช้', 404));
+    }
     res.status(200).json({
       success: true,
       data: user
     });
   } catch (error) {
-    console.log(error.stack);
-    res.status(400).json({ success: false });
+    next(error);
   }
 };
 

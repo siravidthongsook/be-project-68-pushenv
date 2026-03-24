@@ -1,5 +1,6 @@
 const Company = require("../models/Company");
 const Interview = require("../models/Interview");
+const createError = require('../utils/createError');
 
 //@desc     Get all companies
 //@route    GET /api/v1/companies
@@ -57,7 +58,7 @@ exports.getCompanies = async (req, res, next) => {
       .status(200)
       .json({ success: true, count: company.length, data: company });
   } catch (err) {
-    res.status(400).json({ success: false });
+    next(err);
   }
 };
 
@@ -68,11 +69,11 @@ exports.getCompany = async (req, res, next) => {
   try {
     const company = await Company.findById(req.params.id).populate("interview");
     if (!company) {
-      return res.status(404).json({ success: false, msg: "Company not found" });
+      return next(createError('ไม่พบบริษัท', 404));
     }
     res.status(200).json({ success: true, data: company });
   } catch (err) {
-    res.status(400).json({ success: false });
+    next(err);
   }
 };
 //@desc    Create new company
@@ -87,8 +88,7 @@ exports.createCompany = async (req, res, next) => {
       data: company,
     });
   } catch (err) {
-    console.log(err.stack);
-    res.status(400).json({ success: false });
+    next(err);
   }
 };
 
@@ -104,13 +104,13 @@ exports.updateCompany = async (req, res, next) => {
     });
 
     if (!company) {
-      return res.status(404).json({ success: false, msg: "Company not found" });
+      return next(createError('ไม่พบบริษัท', 404));
     }
 
     // Fixed: Changed 'hospital' to 'company'
     res.status(200).json({ success: true, data: company });
   } catch (err) {
-    res.status(400).json({ success: false });
+    next(err);
   }
 };
 
@@ -121,13 +121,13 @@ exports.deleteCompany = async (req, res, next) => {
   try {
     const company = await Company.findById(req.params.id);
     if (!company) {
-      return res.status(400).json({ success: false });
+      return next(createError('ไม่พบบริษัท', 404));
     }
 
     await Interview.deleteMany({ company: req.params.id });
     await Company.deleteOne({ _id: req.params.id });
     res.status(200).json({ success: true, data: {} });
   } catch (err) {
-    res.status(400).json({ success: false });
+    next(err);
   }
 };
