@@ -19,6 +19,7 @@ connectDB();
 const companies = require('./routes/companies');
 const auth = require('./routes/auth');
 const interviews = require('./routes/interviews');
+const users = require('./routes/users');
 
 // Error Handler Middleware
 const errorHandler = require('./middleware/error');
@@ -69,6 +70,7 @@ app.use(hpp());
 app.use('/api/v1/companies', companies);
 app.use('/api/v1/auth', auth);
 app.use('/api/v1/interviews', interviews);
+app.use('/api/v1/users', users);
 
 const PORT = process.env.PORT || 5000;
 

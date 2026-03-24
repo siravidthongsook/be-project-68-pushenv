@@ -17,10 +17,10 @@ const router = express.Router({ mergeParams: true });
 
 router.route('/')
   .get(protect, getInterviews)
-  .post(protect, authorize('user'), addInterview); // User only
+  .post(protect, authorize('admin', 'user'), addInterview);
 
 router.route('/bulk')
-  .post(protect, authorize('user'), addMultipleInterviews); // User only
+  .post(protect, authorize('admin', 'user'), addMultipleInterviews);
 
 router.route('/:id')
   .get(protect, getInterview)

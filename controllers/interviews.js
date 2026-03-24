@@ -1,8 +1,29 @@
 const Interview = require("../models/Interview");
 const Company = require("../models/Company");
+const User = require("../models/User");
 
 const INTERVIEW_START_DATE = new Date("2022-05-10T00:00:00.000Z");
 const INTERVIEW_END_DATE = new Date("2022-05-13T23:59:59.999Z");
+
+async function resolveBookingUserId(req) {
+  if (req.user.role !== "admin") {
+    return req.user.id;
+  }
+
+  const targetUserId = req.body.userId || req.body.user;
+
+  if (!targetUserId) {
+    return null;
+  }
+
+  const targetUser = await User.findById(targetUserId).select("_id");
+
+  if (!targetUser) {
+    return undefined;
+  }
+
+  return targetUser.id;
+}
 
 //@desc     Get all interviews
 //@route    GET /api/v1/interviews
@@ -19,28 +40,48 @@ exports.getInterviews = async (req, res, next) => {
         query = Interview.find({
           user: req.user.id,
           company: req.params.companyId,
-        }).populate({
-          path: "company",
-          select: "name address tel",
-        });
+        })
+          .populate({
+            path: "company",
+            select: "name address tel",
+          })
+          .populate({
+            path: "user",
+            select: "name telephone email role createdAt",
+          });
       } else {
-        query = Interview.find({ user: req.user.id }).populate({
-          path: "company",
-          select: "name address tel",
-        });
+        query = Interview.find({ user: req.user.id })
+          .populate({
+            path: "company",
+            select: "name address tel",
+          })
+          .populate({
+            path: "user",
+            select: "name telephone email role createdAt",
+          });
       }
     } else {
       // If you are an admin, you can see all
       if (req.params.companyId) {
-        query = Interview.find({ company: req.params.companyId }).populate({
-          path: "company",
-          select: "name address tel",
-        });
+        query = Interview.find({ company: req.params.companyId })
+          .populate({
+            path: "company",
+            select: "name address tel",
+          })
+          .populate({
+            path: "user",
+            select: "name telephone email role createdAt",
+          });
       } else {
-        query = Interview.find().populate({
-          path: "company",
-          select: "name address tel",
-        });
+        query = Interview.find()
+          .populate({
+            path: "company",
+            select: "name address tel",
+          })
+          .populate({
+            path: "user",
+            select: "name telephone email role createdAt",
+          });
       }
     }
 
@@ -91,6 +132,11 @@ exports.getInterview = async (req, res, next) => {
         });
     }
 
+    await interview.populate({
+      path: "user",
+      select: "name telephone email role createdAt",
+    });
+
     res.status(200).json({ success: true, data: interview });
   } catch (error) {
     console.log(error);
@@ -106,7 +152,22 @@ exports.getInterview = async (req, res, next) => {
 exports.addInterview = async (req, res, next) => {
   try {
     req.body.company = req.params.companyId;
-    req.body.user = req.user.id;
+
+    const targetUserId = await resolveBookingUserId(req);
+
+    if (targetUserId === null) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Please provide a userId" });
+    }
+
+    if (targetUserId === undefined) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No user found for the supplied userId" });
+    }
+
+    req.body.user = targetUserId;
 
     if (!req.body.date) {
       return res
@@ -138,13 +199,13 @@ exports.addInterview = async (req, res, next) => {
     }
 
     // Check for existed interview (limit to 3 for normal users)
-    const existedInterviews = await Interview.find({ user: req.user.id });
+    const existedInterviews = await Interview.find({ user: targetUserId });
     if (existedInterviews.length >= 3 && req.user.role !== "admin") {
       return res
         .status(400)
         .json({
           success: false,
-          message: `The user with ID ${req.user.id} has already scheduled 3 interviews`,
+          message: `The user with ID ${targetUserId} has already scheduled 3 interviews`,
         });
     }
 
@@ -172,6 +233,19 @@ exports.addMultipleInterviews = async (req, res, next) => {
     }
 
     const { date, companyIds } = req.body;
+    const targetUserId = await resolveBookingUserId(req);
+
+    if (targetUserId === null) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Please provide a userId" });
+    }
+
+    if (targetUserId === undefined) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No user found for the supplied userId" });
+    }
 
     if (!date) {
       return res
@@ -208,7 +282,7 @@ exports.addMultipleInterviews = async (req, res, next) => {
     }
 
     const existingInterviewCount = await Interview.countDocuments({
-      user: req.user.id,
+      user: targetUserId,
     });
 
     if (
@@ -217,7 +291,7 @@ exports.addMultipleInterviews = async (req, res, next) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: `The user with ID ${req.user.id} can only schedule up to 3 interviews`,
+        message: `The user with ID ${targetUserId} can only schedule up to 3 interviews`,
       });
     }
 
@@ -241,7 +315,7 @@ exports.addMultipleInterviews = async (req, res, next) => {
     const payload = uniqueCompanyIds.map((companyId) => ({
       date: requestedDate,
       company: companyId,
-      user: req.user.id,
+      user: targetUserId,
     }));
 
     const interviews = await Interview.insertMany(payload);
