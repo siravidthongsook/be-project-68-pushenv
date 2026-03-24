@@ -3,6 +3,7 @@ const express = require('express');
 const {
   getInterviews,
   getInterview,
+  getInterviewSlots,
   addInterview,
   addMultipleInterviews,
   updateInterview,
@@ -18,6 +19,9 @@ const router = express.Router({ mergeParams: true });
 router.route('/')
   .get(protect, getInterviews)
   .post(protect, authorize('admin', 'user'), addInterview);
+
+router.route('/slots')
+  .get(protect, authorize('admin', 'user'), getInterviewSlots);
 
 router.route('/bulk')
   .post(protect, authorize('admin', 'user'), addMultipleInterviews);

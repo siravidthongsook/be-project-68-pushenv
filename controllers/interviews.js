@@ -4,6 +4,57 @@ const User = require("../models/User");
 
 const INTERVIEW_START_DATE = new Date("2022-05-10T00:00:00.000Z");
 const INTERVIEW_END_DATE = new Date("2022-05-13T23:59:59.999Z");
+const INTERVIEW_SLOT_HOUR_UTC = 10;
+
+function buildInterviewSlots() {
+  const slots = [];
+  const cursor = new Date(INTERVIEW_START_DATE);
+
+  while (cursor <= INTERVIEW_END_DATE) {
+    slots.push(
+      new Date(
+        Date.UTC(
+          cursor.getUTCFullYear(),
+          cursor.getUTCMonth(),
+          cursor.getUTCDate(),
+          INTERVIEW_SLOT_HOUR_UTC,
+          0,
+          0,
+          0,
+        ),
+      ),
+    );
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+
+  return slots;
+}
+
+const INTERVIEW_SLOTS = buildInterviewSlots();
+
+function serializeInterviewSlots() {
+  return INTERVIEW_SLOTS.map((slot) => ({
+    value: slot.toISOString(),
+    label: slot.toLocaleDateString("th-TH", {
+      timeZone: "UTC",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }),
+  }));
+}
+
+function isAllowedInterviewDate(value) {
+  const requestedDate = new Date(value);
+
+  if (Number.isNaN(requestedDate.getTime())) {
+    return false;
+  }
+
+  return INTERVIEW_SLOTS.some(
+    (slot) => slot.toISOString() === requestedDate.toISOString(),
+  );
+}
 
 async function resolveBookingUserId(req) {
   if (req.user.role !== "admin") {
@@ -24,6 +75,17 @@ async function resolveBookingUserId(req) {
 
   return targetUser.id;
 }
+
+//@desc     Get available interview slots
+//@route    GET /api/v1/interviews/slots
+//@access   Private
+exports.getInterviewSlots = async (req, res, next) => {
+  res.status(200).json({
+    success: true,
+    count: INTERVIEW_SLOTS.length,
+    data: serializeInterviewSlots(),
+  });
+};
 
 //@desc     Get all interviews
 //@route    GET /api/v1/interviews
@@ -175,15 +237,10 @@ exports.addInterview = async (req, res, next) => {
         .json({ success: false, message: "Please provide an interview date" });
     }
 
-    const requestedDate = new Date(req.body.date);
-    if (
-      Number.isNaN(requestedDate.getTime()) ||
-      requestedDate < INTERVIEW_START_DATE ||
-      requestedDate > INTERVIEW_END_DATE
-    ) {
+    if (!isAllowedInterviewDate(req.body.date)) {
       return res.status(400).json({
         success: false,
-        message: "Interview date must be between May 10 and May 13, 2022",
+        message: "Please choose one of the available interview slots",
       });
     }
 
@@ -253,15 +310,10 @@ exports.addMultipleInterviews = async (req, res, next) => {
         .json({ success: false, message: "Please provide an interview date" });
     }
 
-    const requestedDate = new Date(date);
-    if (
-      Number.isNaN(requestedDate.getTime()) ||
-      requestedDate < INTERVIEW_START_DATE ||
-      requestedDate > INTERVIEW_END_DATE
-    ) {
+    if (!isAllowedInterviewDate(date)) {
       return res.status(400).json({
         success: false,
-        message: "Interview date must be between May 10 and May 13, 2022",
+        message: "Please choose one of the available interview slots",
       });
     }
 
@@ -313,7 +365,7 @@ exports.addMultipleInterviews = async (req, res, next) => {
     }
 
     const payload = uniqueCompanyIds.map((companyId) => ({
-      date: requestedDate,
+      date: new Date(date),
       company: companyId,
       user: targetUserId,
     }));
@@ -363,15 +415,10 @@ exports.updateInterview = async (req, res, next) => {
     }
 
     if (req.body.date) {
-      const requestedDate = new Date(req.body.date);
-      if (
-        Number.isNaN(requestedDate.getTime()) ||
-        requestedDate < INTERVIEW_START_DATE ||
-        requestedDate > INTERVIEW_END_DATE
-      ) {
+      if (!isAllowedInterviewDate(req.body.date)) {
         return res.status(400).json({
           success: false,
-          message: "Interview date must be between May 10 and May 13, 2022",
+          message: "Please choose one of the available interview slots",
         });
       }
     }
